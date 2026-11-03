@@ -187,8 +187,18 @@ class _PeersViewState extends State<_PeersView>
       child: Consumer<Peers>(builder: (context, peers, child) {
         if (peers.peers.isEmpty) {
           gFFI.peerTabModel.setCurrentTabCachedPeers([]);
-          return Center(
+          // NexlyDesk: clip + scroll so the empty tip never paints over the
+          // status bar below when the window is at its minimum size.
+          return ClipRect(
+              child: LayoutBuilder(
+                  builder: (context, cons) => SingleChildScrollView(
+                      child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(minHeight: cons.maxHeight),
+                          child: Center(
             child: Column(
+              key: const Key('nexly-empty-peers'),
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
@@ -207,7 +217,7 @@ class _PeersViewState extends State<_PeersView>
                 ),
               ],
             ),
-          );
+          )))));
         } else {
           return _buildPeersView(peers);
         }
