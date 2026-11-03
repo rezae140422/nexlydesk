@@ -28,7 +28,7 @@ function Collect-AppLogs() {
 }
 function Install-Nexly($installer) {
   Log install "running $installer --silent-install"
-  Start-Process -FilePath $installer -ArgumentList '--silent-install' -Wait
+  $ip = Start-Process -FilePath $installer -ArgumentList '--silent-install' -PassThru
   for ($i=0; $i -lt 90 -and -not (Test-Path $Exe); $i++) { Start-Sleep 2 }
   Start-Sleep 10
   Shot '01-after-install'
@@ -60,16 +60,22 @@ function Launch-Nexly() {
   Start-Sleep 2
   return $p
 }
+function Run-Cli($a) {
+  $o = Join-Path $env:TEMP ("cli{0}.txt" -f (Get-Random))
+  $p = Start-Process -FilePath $Exe -ArgumentList $a -RedirectStandardOutput $o -PassThru -WindowStyle Hidden
+  if (-not $p.WaitForExit(60000)) { $p.Kill() }
+  return ((Get-Content $o -ErrorAction SilentlyContinue | Out-String).Trim())
+}
 function Get-Id() {
   for ($i=0; $i -lt 30; $i++) {
-    $id = ((& $Exe --get-id | Out-String).Trim())
+    $id = (Run-Cli @('--get-id'))
     if ($id -match '^\d{8,11}$') { Log id "ID=$id"; return $id }
     Start-Sleep 3 }
   throw "no valid ID from --get-id (got '$id')"
 }
 function Uninstall-Nexly() {
   Get-Process NexlyDesk -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-  Start-Process -FilePath $Exe -ArgumentList '--uninstall' -Wait
+  $up = Start-Process -FilePath $Exe -ArgumentList '--uninstall' -PassThru
   for ($i=0; $i -lt 60 -and (Test-Path $InstDir); $i++) { Start-Sleep 2 }
   Shot '09-after-uninstall'
   if (Test-Path $InstDir) { throw "Uninstall left $InstDir" }

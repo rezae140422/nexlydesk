@@ -4,7 +4,7 @@ if ($Phase -eq 'start') {
   Install-Nexly (Join-Path $env:GITHUB_WORKSPACE 'dist\NexlyDesk-windows-x64.exe')
   $p = Launch-Nexly
   $pw = 'NxT' + (Get-Random -Minimum 100000 -Maximum 999999) + 'q'
-  Log id ((& $Exe --password $pw | Out-String).Trim())
+  Log id (Run-Cli @('--password', $pw))
   $id = Get-Id
   New-Item -ItemType Directory -Force share | Out-Null
   "$id`n$pw" | Out-File -Encoding ascii share\host.txt
