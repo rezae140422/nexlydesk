@@ -14,7 +14,7 @@ for m in re.finditer(r'<node [^>]*>',x):
         print((a[0]+a[2])//2,(a[1]+a[3])//2);break
 P
 }
-listening(){ adb shell "cat /proc/net/tcp /proc/net/tcp6" > "$EV/03b-listening-sockets.log"; grep -qiE ':5276 [0-9A-F:]+ 0A' "$EV/03b-listening-sockets.log"; }
+listening(){ adb shell "cat /proc/net/tcp /proc/net/tcp6" > "$EV/03b-listening-sockets.log"; grep -qiE ':527E [0-9A-F:]+ 0A' "$EV/03b-listening-sockets.log"; }
 adb logcat -c
 adb install -r -g dist/NexlyDesk-android-universal.apk 2>&1 | tee "$EV/01-install.log" | grep -q Success || fail install
 # pre-grant what can be pre-granted; MediaProjection is still confirmed by tapping the system dialog below
@@ -27,7 +27,7 @@ B=$(tapdesc '[^"]*(Share screen|اشتراک)[^"]*'); [ -n "$B" ] && adb shell i
 sleep 5
 SAF=0
 shot(){ adb exec-out screencap -p > "$EV/03a-$1.png"; dump; cp /tmp/u.xml "$EV/03a-$1.xml"; grep -qE 'com.android.documentsui|USE THIS FOLDER|Use this folder' /tmp/u.xml && SAF=1; }
-started(){ listening && grep -qE '[0-9]{3} ?[0-9]{3} ?[0-9]{3,4}' /tmp/u.xml && ! grep -q 'Service is not running' /tmp/u.xml; }
+started(){ listening && grep -qE 'text="[0-9]{1,3}( ?[0-9]{3}){2,3}"' /tmp/u.xml && ! grep -q 'Service is not running' /tmp/u.xml; }
 for round in 1 2 3; do
   shot "r$round-0"; started && break
   C=$(tapdesc 'Start service'); [ -n "$C" ] && adb shell input tap $C
@@ -54,11 +54,11 @@ x=open(sys.argv[1],encoding='utf8').read()
 parts=[]
 for v in re.findall(r'(?:text|content-desc)="([^"]*)"',x):
     parts+= [p.strip() for p in html.unescape(v).split('\n') if p.strip()]
-idv=next((p for p in parts if re.fullmatch(r'\d{3} ?\d{3} ?\d{3,4}',p)),'')
+idv=next((p for p in parts if re.fullmatch(r'\d{1,3}( ?\d{3}){2,3}',p)),'')
 otp=''
-for i,p in enumerate(parts):
-    if re.search(r'one-time password',p,re.I):
-        otp=next((q for q in parts[i+1:i+4] if re.fullmatch(r'[A-Za-z0-9]{6,10}',q)),'');break
+if idv:
+    i=parts.index(idv)
+    otp=next((q for q in parts[i+1:i+4] if re.fullmatch(r'[A-Za-z0-9]{6,10}',q) and not q.isdigit()),'')
 print(f"ANDROID_ID='{idv}'\nANDROID_OTP='{otp}'")
 P
 cat "$EV/03-parsed.env"; . "$EV/03-parsed.env"
