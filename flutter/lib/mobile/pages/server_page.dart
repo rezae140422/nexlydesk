@@ -481,6 +481,15 @@ class ServerInfo extends StatelessWidget {
     }
 
     Widget ConnectionStateNotification() {
+      if (nexlyIsDirectIpMode(
+          bind.mainGetOptionSync(key: 'custom-rendezvous-server'))) {
+        return Row(children: [
+          const Icon(Icons.check_circle,
+                  color: kNexlyDirectReadyColor, size: iconSize)
+              .marginOnly(right: iconMarginRight),
+          const Expanded(child: NexlyDirectReadyStatus(fontSize: 16))
+        ]);
+      }
       if (serverModel.connectStatus == -1) {
         return Row(children: [
           const Icon(Icons.warning_amber_sharp,
@@ -561,6 +570,7 @@ class ServerInfo extends StatelessWidget {
                           })
                     ])
             ]).marginOnly(left: 40, bottom: 15),
+            const NexlyLocalIps(fontSize: 22).marginOnly(left: 40, bottom: 12),
             ConnectionStateNotification()
           ],
         ));

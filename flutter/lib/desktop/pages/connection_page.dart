@@ -119,7 +119,11 @@ class _OnlineStatusWidgetState extends State<OnlineStatusWidget> {
               width: 8,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                color: _svcStopped.value ||
+                color: !_svcStopped.value &&
+                        nexlyIsDirectIpMode(bind.mainGetOptionSync(
+                            key: 'custom-rendezvous-server'))
+                    ? kNexlyDirectReadyColor
+                    : _svcStopped.value ||
                         stateGlobal.svcStatus.value == SvcStatus.connecting
                     ? kColorWarn
                     : (stateGlobal.svcStatus.value == SvcStatus.ready
@@ -157,6 +161,11 @@ class _OnlineStatusWidgetState extends State<OnlineStatusWidget> {
 
   _buildConnStatusMsg() {
     widget.onSvcStatusChanged?.call();
+    if (!_svcStopped.value &&
+        nexlyIsDirectIpMode(
+            bind.mainGetOptionSync(key: 'custom-rendezvous-server'))) {
+      return NexlyDirectReadyStatus(fontSize: em);
+    }
     return Text(
       _svcStopped.value
           ? translate("Service is not running")
@@ -316,7 +325,8 @@ class _ConnectionPageState extends State<ConnectionPage>
                 Flexible(child: _buildRemoteIDTextField(context)),
               ],
             ).marginOnly(top: 22),
-            const NexlyDirectIpHint().paddingOnly(top: 8, right: 12),
+            const NexlyIpInputHint().paddingOnly(top: 8, right: 12),
+            const NexlyDirectIpHint().paddingOnly(top: 6, right: 12),
             SizedBox(height: 12),
             Divider().paddingOnly(right: 12),
             Expanded(child: PeerTabPage()),

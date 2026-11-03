@@ -90,6 +90,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
             Obx(() => _buildUpdateUI(stateGlobal.updateUrl.value)),
           _buildNexlyHeader(),
           _buildRemoteIDTextField(),
+          const NexlyIpInputHint().paddingSymmetric(horizontal: 16, vertical: 4),
           const NexlyDirectIpHint().paddingSymmetric(horizontal: 16, vertical: 4),
         ])),
         SliverFillRemaining(

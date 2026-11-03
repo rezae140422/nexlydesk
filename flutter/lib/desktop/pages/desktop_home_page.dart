@@ -97,6 +97,9 @@ class _DesktopHomePageState extends State<DesktopHomePage>
             buildIDBoard(context),
             Divider(height: 1, color: NexlyTheme.border(context)),
             buildPasswordBoard(context),
+            Divider(height: 1, color: NexlyTheme.border(context)),
+            const NexlyLocalIps(fontSize: 18)
+                .paddingSymmetric(horizontal: 16, vertical: 6),
           ]),
         ),
       FutureBuilder<Widget>(

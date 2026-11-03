@@ -406,7 +406,7 @@ jobs:
         flutter-version: ${{ env.FLUTTER_VERSION }}
     - name: flutter test nexly_full_value_test.dart
       working-directory: flutter
-      run: flutter pub get && flutter test test/nexly_full_value_test.dart 2>&1 | tee ../widget-test.log
+      run: flutter pub get && flutter test test/nexly_full_value_test.dart test/nexly_direct_mode_test.dart 2>&1 | tee ../widget-test.log
     - uses: actions/upload-artifact@v4
       if: always()
       with:
