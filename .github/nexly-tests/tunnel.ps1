@@ -5,12 +5,15 @@ Invoke-WebRequest https://github.com/ekzhang/bore/releases/download/v0.6.0/bore-
 Expand-Archive $z -DestinationPath "$env:TEMP\bore" -Force
 $log = "$env:TEMP\bore.log"
 # start via WMI so the tunnel is not tied to this step's job object (survives the step)
-$cmd = "cmd.exe /c `"$env:TEMP\bore\bore.exe`" local 21118 --to bore.pub > `"$log`" 2> `"$log.err`""
-Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd } | Out-Null
-for ($i=0; $i -lt 30; $i++) { Start-Sleep 2; $m = Select-String -Path $log,"$log.err" -Pattern 'bore\.pub:\d+' -ErrorAction SilentlyContinue | Select-Object -First 1; if ($m) { break } }
-Get-Content $log,"$log.err" -ErrorAction SilentlyContinue
+$bat = "$env:TEMP\bore-run.cmd"
+Set-Content $bat "@`"$env:TEMP\bore\bore.exe`" local 21118 --to bore.pub > `"$log`" 2>&1" -Encoding ascii
+$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "cmd.exe /c `"$bat`"" }
+Write-Host "WMI create rc=$($r.ReturnValue) pid=$($r.ProcessId)"
+$m = $null
+for ($i=0; $i -lt 30; $i++) { Start-Sleep 2; if (Test-Path $log) { $m = Select-String -Path $log -Pattern 'bore\.pub:\d+' | Select-Object -First 1; if ($m) { break } } }
+if (Test-Path $log) { Get-Content $log }
 if (-not $m) { throw 'tunnel failed' }
 $ep = $m.Matches[0].Value; Set-Content -Path $Out -Value $ep; Write-Host "endpoint $ep"
 $h,$pt = $ep -split ':'
 try { $c = New-Object System.Net.Sockets.TcpClient; $c.Connect($h, [int]$pt); Write-Host "public endpoint reachable (self-test)"; $c.Close() } catch { Write-Host "WARN: public endpoint NOT reachable (self-test): $_" }
-Get-Content $log,"$log.err" -ErrorAction SilentlyContinue
+if (Test-Path $log) { Get-Content $log }
