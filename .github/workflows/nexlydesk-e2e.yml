@@ -83,14 +83,18 @@ jobs:
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
         sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
     - name: boot emulator (API 30, pixel_6)
+      timeout-minutes: 20
       run: |
+        set -x
         SDK=$ANDROID_HOME/cmdline-tools/latest/bin
-        yes | $SDK/sdkmanager --install "system-images;android-30;google_apis;x86_64" emulator platform-tools > /dev/null
+        yes | $SDK/sdkmanager --licenses > /dev/null || true
+        timeout 600 $SDK/sdkmanager --install "system-images;android-30;google_apis;x86_64" emulator platform-tools | tail -3
         echo no | $SDK/avdmanager create avd -n nx -k "system-images;android-30;google_apis;x86_64" -d pixel_6
-        nohup $ANDROID_HOME/emulator/emulator -avd nx -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot > emu.log 2>&1 &
         export PATH=$ANDROID_HOME/platform-tools:$PATH
-        adb wait-for-device
+        nohup $ANDROID_HOME/emulator/emulator -avd nx -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -accel on > emu.log 2>&1 &
+        timeout 300 adb wait-for-device || { cat emu.log; exit 1; }
         for i in $(seq 1 120); do [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && break; sleep 5; done
+        [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] || { cat emu.log; exit 1; }
         for s in window_animation_scale transition_animation_scale animator_duration_scale; do adb shell settings put global $s 0; done
         echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
     - name: install, start sharing, verify ID + 21118
