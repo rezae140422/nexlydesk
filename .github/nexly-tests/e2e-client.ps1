@@ -10,6 +10,11 @@ function PatternRatio($file) {
     if (($c.R -gt 200 -and $c.G -lt 70 -and $c.B -gt 200) -or ($c.R -lt 70 -and $c.G -gt 200 -and $c.B -gt 200)) { $m++ } } }
   $b.Dispose(); return [math]::Round($m/$n,3)
 }
+# connect by IP:port so the client takes the direct-IP path (no rendezvous lookup)
+$h,$port = $Endpoint -split ':',2
+if ($h -notmatch '^\d+\.\d+\.\d+\.\d+$') {
+  $ip = ([System.Net.Dns]::GetHostAddresses($h) | Where-Object { $_.AddressFamily -eq 'InterNetwork' } | Select-Object -First 1).IPAddressToString
+  Log client "resolved $h -> $ip"; $Endpoint = "${ip}:$port" }
 $ok = $false
 for ($a=1; $a -le 4 -and -not $ok; $a++) {
   Log client "attempt ${a}: --connect $Endpoint"

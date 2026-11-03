@@ -88,8 +88,11 @@ jobs:
         set -x
         SDK=$ANDROID_HOME/cmdline-tools/latest/bin
         yes | $SDK/sdkmanager --licenses > /dev/null || true
-        timeout 600 $SDK/sdkmanager --install "system-images;android-30;google_apis;x86_64" emulator platform-tools | tail -3
-        echo no | $SDK/avdmanager create avd -n nx -k "system-images;android-30;google_apis;x86_64" -d pixel_6
+        export ANDROID_AVD_HOME=$HOME/.android/avd; mkdir -p $ANDROID_AVD_HOME; echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> $GITHUB_ENV
+        timeout 900 $SDK/sdkmanager --install "system-images;android-30;google_apis;x86_64" "emulator" "platform-tools" > sdk.log 2>&1; tail -c 2000 sdk.log
+        ls $ANDROID_HOME/system-images/android-30/google_apis/x86_64
+        echo no | $SDK/avdmanager create avd --force -n nx --abi google_apis/x86_64 -k "system-images;android-30;google_apis;x86_64" -d pixel_6
+        $ANDROID_HOME/emulator/emulator -list-avds
         export PATH=$ANDROID_HOME/platform-tools:$PATH
         nohup $ANDROID_HOME/emulator/emulator -avd nx -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -accel on > emu.log 2>&1 &
         timeout 300 adb wait-for-device || { cat emu.log; exit 1; }
