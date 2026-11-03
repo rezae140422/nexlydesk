@@ -26,18 +26,24 @@ adb shell pidof $PKG || fail "process not running 30s after launch"
 B=$(tapdesc '[^"]*(Share screen|اشتراک)[^"]*'); [ -n "$B" ] && adb shell input tap $B
 sleep 5
 SAF=0
-for k in $(seq 1 30); do
-  dump; cp /tmp/u.xml "$EV/03a-step-$k.xml"
-  grep -qE 'com.android.documentsui|USE THIS FOLDER|Use this folder' /tmp/u.xml && SAF=1
-  if listening && grep -qE '[0-9]{3} ?[0-9]{3} ?[0-9]{3,4}' /tmp/u.xml && ! grep -qE 'Start service' /tmp/u.xml; then break; fi
-  # scam-warning dialog: "I Agree" is enabled only after a countdown
-  if grep -q 'I Agree' /tmp/u.xml; then sleep 15; D=$(tapdesc "Don't show again"); [ -n "$D" ] && adb shell input tap $D; sleep 1; fi
-  C=$(tapdesc 'Start service|I Agree|Start now|START NOW|OK|Allow|ALLOW|Accept|Continue')
-  if [ -n "$C" ]; then adb shell input tap $C
-  elif ! grep -q "package=\"$PKG\"" /tmp/u.xml; then adb shell input keyevent KEYCODE_BACK
-  else W=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); X=${W%x*}; Y=${W#*x}; adb shell input swipe $((X/2)) $((Y*3/4)) $((X/2)) $((Y/4)) 300; fi
-  sleep 5
-  adb exec-out screencap -p > "$EV/03a-step-$k.png"
+shot(){ adb exec-out screencap -p > "$EV/03a-$1.png"; dump; cp /tmp/u.xml "$EV/03a-$1.xml"; grep -qE 'com.android.documentsui|USE THIS FOLDER|Use this folder' /tmp/u.xml && SAF=1; }
+started(){ listening && grep -qE '[0-9]{3} ?[0-9]{3} ?[0-9]{3,4}' /tmp/u.xml && ! grep -q 'Service is not running' /tmp/u.xml; }
+for round in 1 2 3; do
+  shot "r$round-0"; started && break
+  C=$(tapdesc 'Start service'); [ -n "$C" ] && adb shell input tap $C
+  sleep 3; shot "r$round-1"
+  if grep -q 'I Agree' /tmp/u.xml; then
+    sleep 15   # scam-warning countdown
+    C=$(tapdesc 'I Agree'); adb shell input tap $C; sleep 3; shot "r$round-2"
+  fi
+  for k in $(seq 1 10); do
+    started && break
+    C=$(tapdesc 'Start now|START NOW|OK|Allow|ALLOW|Accept|Continue|I Agree')
+    if [ -n "$C" ]; then adb shell input tap $C
+    elif ! grep -q "package=\"$PKG\"" /tmp/u.xml; then adb shell input keyevent KEYCODE_BACK; fi
+    sleep 4; shot "r$round-s$k"
+  done
+  started && break
 done
 sleep 5
 adb exec-out screencap -p > "$EV/03-id-password.png"

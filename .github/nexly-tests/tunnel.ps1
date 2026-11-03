@@ -9,3 +9,6 @@ for ($i=0; $i -lt 30; $i++) { Start-Sleep 2; $m = Select-String -Path $log,"$log
 Get-Content $log,"$log.err" -ErrorAction SilentlyContinue
 if (-not $m) { throw 'tunnel failed' }
 $ep = $m.Matches[0].Value; Set-Content -Path $Out -Value $ep; Write-Host "endpoint $ep"
+$h,$pt = $ep -split ':'
+try { $c = New-Object System.Net.Sockets.TcpClient; $c.Connect($h, [int]$pt); Write-Host "public endpoint reachable (self-test)"; $c.Close() } catch { Write-Host "WARN: public endpoint NOT reachable (self-test): $_" }
+Get-Content $log,"$log.err" -ErrorAction SilentlyContinue
