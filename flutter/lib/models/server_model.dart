@@ -401,14 +401,9 @@ class ServerModel with ChangeNotifier {
         stopService();
       }
     } else {
-      if (isAndroid) {
-        try {
-          await AndroidDocuments.requireLogFolder();
-          await showAndroidFileTransferSetup(gFFI);
-        } catch (_) {
-          debugPrint('Folder setup failed; continuing service startup');
-        }
-      }
+      // NexlyDesk: no SAF log-folder / file-transfer folder picker when starting
+      // sharing. File logging stays off until a folder is chosen in Settings;
+      // app-private storage is used for everything else.
       await checkRequestNotificationPermission();
       if (bind.mainGetLocalOption(key: kOptionDisableFloatingWindow) != 'Y') {
         await checkFloatingWindowPermission();
