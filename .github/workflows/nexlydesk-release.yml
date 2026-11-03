@@ -402,6 +402,7 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         path: dist
+        pattern: nexlydesk-*
         merge-multiple: true
     - name: Publish GitHub Release (unsigned, prerelease)
       env:
