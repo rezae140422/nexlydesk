@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:auto_size_text_field/auto_size_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hbb/nexly/nexly_theme.dart';
 import 'package:flutter_hbb/common/formatter/id_formatter.dart';
 import 'package:flutter_hbb/common/widgets/connection_page_title.dart';
 import 'package:flutter_hbb/models/state_model.dart';
@@ -86,6 +87,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
             delegate: SliverChildListDelegate([
           if (!bind.isCustomClient() && !isIOS)
             Obx(() => _buildUpdateUI(stateGlobal.updateUrl.value)),
+          _buildNexlyHeader(),
           _buildRemoteIDTextField(),
         ])),
         SliverFillRemaining(
@@ -94,6 +96,24 @@ class _ConnectionPageState extends State<ConnectionPage> {
         )
       ],
     ).marginOnly(top: 2, left: 10, right: 10);
+  }
+
+  /// NexlyDesk header: mark + name + slogan (glow only on slogan).
+  Widget _buildNexlyHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+      child: Row(children: [
+        loadIcon(26),
+        const SizedBox(width: 10),
+        Text(bind.mainGetAppNameSync(),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+        const SizedBox(width: 8),
+        Flexible(
+            child: Text('دسترسی از راه دور امن',
+                overflow: TextOverflow.ellipsis,
+                style: NexlyTheme.slogan(context))),
+      ]),
+    );
   }
 
   /// Callback for the connect button.
@@ -124,7 +144,8 @@ class _ConnectionPageState extends State<ConnectionPage> {
         ? const SizedBox(height: 0)
         : InkWell(
             onTap: () async {
-              final url = 'https://rustdesk.com/download';
+              final url = ''; // NexlyDesk: no foreign download site
+              if (url.isEmpty) return;
               // https://pub.dev/packages/url_launcher#configuration
               // https://developer.android.com/training/package-visibility/use-cases#open-urls-custom-tabs
               //
@@ -154,8 +175,9 @@ class _ConnectionPageState extends State<ConnectionPage> {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
         child: Ink(
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.all(Radius.circular(13)),
+            color: NexlyTheme.card2(context),
+            borderRadius: const BorderRadius.all(Radius.circular(14)),
+            border: Border.all(color: NexlyTheme.primary(context), width: 1.5),
           ),
           child: Row(
             children: <Widget>[
@@ -234,7 +256,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
                           fontFamily: 'WorkSans',
                           fontWeight: FontWeight.bold,
                           fontSize: 30,
-                          color: MyTheme.idColor,
+                          color: NexlyTheme.primary(context),
                         ),
                         decoration: InputDecoration(
                           labelText: translate('Remote ID'),
@@ -337,10 +359,17 @@ class _ConnectionPageState extends State<ConnectionPage> {
               SizedBox(
                 width: 60,
                 height: 60,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_forward,
-                      color: MyTheme.darkGray, size: 45),
-                  onPressed: onConnect,
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Material(
+                    color: NexlyTheme.primary(context),
+                    borderRadius: BorderRadius.circular(12),
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_forward,
+                          color: NexlyTheme.onPrimary(context), size: 28),
+                      onPressed: onConnect,
+                    ),
+                  ),
                 ),
               ),
             ],

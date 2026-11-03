@@ -7,6 +7,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hbb/nexly/nexly_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common/formatter/id_formatter.dart';
 import 'package:flutter_hbb/desktop/widgets/refresh_wrapper.dart';
@@ -249,16 +250,16 @@ class MyTheme {
   MyTheme._();
 
   static const Color grayBg = Color(0xFFEFEFF2);
-  static const Color accent = Color(0xFF0071FF);
-  static const Color accent50 = Color(0x770071FF);
-  static const Color accent80 = Color(0xAA0071FF);
+  static const Color accent = Color(0xFF6F1D31) /* Nexly maroon */;
+  static const Color accent50 = Color(0x776F1D31);
+  static const Color accent80 = Color(0xAA6F1D31);
   static const Color canvasColor = Color(0xFF212121);
   static const Color border = Color(0xFFCCCCCC);
-  static const Color idColor = Color(0xFF00B6F0);
+  static const Color idColor = Color(0xFFB9945A);
   static const Color darkGray = Color.fromARGB(255, 148, 148, 148);
-  static const Color cmIdColor = Color(0xFF21790B);
+  static const Color cmIdColor = Color(0xFF2F6B4F);
   static const Color dark = Colors.black87;
-  static const Color button = Color(0xFF2C8CFF);
+  static const Color button = Color(0xFF6F1D31);
   static const Color hoverBorder = Color(0xFF999999);
 
   // ListTile
@@ -369,7 +370,9 @@ class MyTheme {
     }),
   );
 
-  static ThemeData lightTheme = ThemeData(
+  static ThemeData lightTheme =
+      NexlyTheme.apply(_rdLightTheme, dark: false);
+  static ThemeData _rdLightTheme = ThemeData(
     // https://stackoverflow.com/questions/77537315/after-upgrading-to-flutter-3-16-the-app-bar-background-color-button-size-and
     useMaterial3: false,
     brightness: Brightness.light,
@@ -468,7 +471,9 @@ class MyTheme {
       TabbarTheme.light,
     ],
   );
-  static ThemeData darkTheme = ThemeData(
+  static ThemeData darkTheme =
+      NexlyTheme.apply(_rdDarkTheme, dark: true);
+  static ThemeData _rdDarkTheme = ThemeData(
     useMaterial3: false,
     brightness: Brightness.dark,
     hoverColor: Color.fromARGB(255, 45, 46, 53),

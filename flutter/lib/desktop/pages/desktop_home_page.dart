@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hbb/nexly/nexly_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common.dart';
 import 'package:flutter_hbb/common/widgets/animated_rotation_widget.dart';
@@ -32,7 +33,7 @@ class DesktopHomePage extends StatefulWidget {
   State<DesktopHomePage> createState() => _DesktopHomePageState();
 }
 
-const borderColor = Color(0xFF2F65BA);
+const borderColor = Color(0xFFB9945A); // Nexly gold
 
 class _DesktopHomePageState extends State<DesktopHomePage>
     with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
@@ -85,13 +86,19 @@ class _DesktopHomePageState extends State<DesktopHomePage>
           alignment: Alignment.center,
           child: loadPowered(context),
         ),
-      Align(
-        alignment: Alignment.center,
-        child: loadLogo(),
-      ),
+      buildNexlyBrandHeader(context),
       buildTip(context),
-      if (!isOutgoingOnly) buildIDBoard(context),
-      if (!isOutgoingOnly) buildPasswordBoard(context),
+      if (!isOutgoingOnly)
+        Container(
+          margin: const EdgeInsets.fromLTRB(14, 4, 14, 10),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: NexlyTheme.cardDecoration(context),
+          child: Column(children: [
+            buildIDBoard(context),
+            Divider(height: 1, color: NexlyTheme.border(context)),
+            buildPasswordBoard(context),
+          ]),
+        ),
       FutureBuilder<Widget>(
         future: Future.value(
             Obx(() => buildHelpCards(stateGlobal.updateUrl.value))),
@@ -181,7 +188,28 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   buildRightPane(BuildContext context) {
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
-      child: ConnectionPage(),
+      padding: const EdgeInsets.all(14),
+      child: Container(
+        decoration: NexlyTheme.cardDecoration(context),
+        clipBehavior: Clip.antiAlias,
+        child: ConnectionPage(),
+      ),
+    );
+  }
+
+  /// NexlyDesk brand header: N mark + product name + slogan (glow only here).
+  Widget buildNexlyBrandHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+      child: Row(children: [
+        loadIcon(28),
+        const SizedBox(width: 10),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(bind.mainGetAppNameSync(),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+          Text('دسترسی از راه دور امن', style: NexlyTheme.slogan(context)),
+        ]),
+      ]),
     );
   }
 
@@ -189,14 +217,14 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     final model = gFFI.serverModel;
     return Container(
       margin: const EdgeInsets.only(left: 20, right: 11),
-      height: 57,
+      height: 72,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
           Container(
             width: 2,
-            decoration: const BoxDecoration(color: MyTheme.accent),
+            decoration: const BoxDecoration(color: NexlyColors.gold),
           ).marginOnly(top: 5),
           Expanded(
             child: Padding(
@@ -238,8 +266,10 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.only(top: 10, bottom: 10),
                         ),
-                        style: TextStyle(
-                          fontSize: 22,
+                        style: const TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
                         ),
                       ).workaroundFreezeLinuxMint(),
                     ),
@@ -303,7 +333,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
           Container(
             width: 2,
             height: 52,
-            decoration: BoxDecoration(color: MyTheme.accent),
+            decoration: const BoxDecoration(color: NexlyColors.gold),
           ),
           Expanded(
             child: Padding(
@@ -612,8 +642,8 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: [
-                  Color.fromARGB(255, 226, 66, 188),
-                  Color.fromARGB(255, 244, 114, 124),
+                  NexlyColors.maroon,
+                  NexlyColors.maroonDark,
                 ],
               )),
               padding: EdgeInsets.all(20),

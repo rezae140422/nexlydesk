@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bot_toast/bot_toast.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hbb/nexly/nexly_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common/widgets/overlay.dart';
 import 'package:flutter_hbb/desktop/pages/desktop_tab_page.dart';
@@ -378,6 +379,7 @@ void _runApp(
       builder: (context, child) {
         child = _keepScaleBuilder(context, child);
         child = botToastBuilder(context, child);
+        child = NexlyTheme.directional(child);
         return child;
       },
     ),
@@ -522,12 +524,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                       data: MediaQuery.of(context).copyWith(
                         textScaler: TextScaler.linear(1.0),
                       ),
-                      child: child ?? Container(),
+                      child: NexlyTheme.directional(child),
                     ),
                   )
               : (context, child) {
                   child = _keepScaleBuilder(context, child);
                   child = botToastBuilder(context, child);
+        child = NexlyTheme.directional(child);
                   if ((isDesktop && desktopType == DesktopType.main) ||
                       isWebDesktop) {
                     child = keyListenerBuilder(context, child);
