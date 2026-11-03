@@ -60,4 +60,8 @@ echo "SAF folder picker shown during start: $SAF" | tee -a "$EV/result.log"
 echo "ID visible in full: $ANDROID_ID" | tee -a "$EV/result.log"
 listening || fail "21118 not listening on Android after starting sharing"
 echo "Android direct-IP port 21118 listening" | tee -a "$EV/result.log"
+if grep -qE 'در حال برقراری|در حال اتصال به شبکه|Connecting to the' "$EV/03-ui.xml"; then fail "stuck rendezvous status message is shown"; fi
+echo "stuck 'connecting' message absent" | tee -a "$EV/result.log"
+grep -q 'آماده‌ی اتصال مستقیم' "$EV/03-ui.xml" && echo "green direct-ready status shown" | tee -a "$EV/result.log" || fail "direct-ready status not shown"
+grep -qE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' "$EV/03-ui.xml" && echo "local IPv4 shown: $(grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' "$EV/03-ui.xml" | grep -v 192.168.1.20 | sort -u | tr '\n' ' ')" | tee -a "$EV/result.log"
 adb shell pidof $PKG || fail "process died"
