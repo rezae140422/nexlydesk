@@ -43,6 +43,9 @@ adb shell uiautomator dump /sdcard/ui2.xml >/dev/null; adb pull /sdcard/ui2.xml 
 grep -oE '(text|content-desc)="[^"]+"' "$EV/03-ui.xml" | tee "$EV/03-visible-text.log"
 grep -qE '[0-9]{3} ?[0-9]{3} ?[0-9]{3,4}' "$EV/03-ui.xml" || fail "ID not visible on Share screen"
 echo "ID visible: $(grep -oE '[0-9]{3} ?[0-9]{3} ?[0-9]{3,4}' "$EV/03-ui.xml" | head -1)" | tee -a "$EV/result.log"
+# direct IP: is the Android direct-access server listening on 21118?
+adb shell "cat /proc/net/tcp /proc/net/tcp6" > "$EV/03b-listening-sockets.log"
+if grep -qi ':5276 ' "$EV/03b-listening-sockets.log"; then echo "Android direct-IP port 21118 listening" | tee -a "$EV/result.log"; else echo "WARN: 21118 not listening on Android" | tee -a "$EV/result.log"; fi
 adb logcat -d > "$EV/logcat-full.log"
 if grep -E "FATAL EXCEPTION|AndroidRuntime: Process: $PKG|Fatal signal" "$EV/logcat-full.log" > "$EV/crash.log"; then fail "crash in logcat"; fi
 adb shell pidof $PKG || fail "process died"

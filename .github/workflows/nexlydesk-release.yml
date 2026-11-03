@@ -480,7 +480,7 @@ jobs:
         path: dist
         pattern: nexlydesk-*
         merge-multiple: true
-    - name: Publish GitHub Release (unsigned, latest)
+    - name: Create DRAFT GitHub Release (unsigned)
       env:
         GH_TOKEN: ${{ github.token }}
       shell: bash
@@ -488,9 +488,9 @@ jobs:
         set -e
         ls -la dist
         TAG="${TAG_NAME}"
+        # DRAFT only: publishing / flipping v0.1.0-alpha happens manually after approval.
         if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
           gh release upload "$TAG" dist/* --clobber -R "$GITHUB_REPOSITORY"
-          gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --prerelease=false --latest --notes-file .github/nexly-tests/RELEASE_NOTES.md
         else
-          gh release create "$TAG" dist/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "NexlyDesk $TAG" --notes-file .github/nexly-tests/RELEASE_NOTES.md
+          gh release create "$TAG" dist/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft --title "NexlyDesk $TAG" --notes-file .github/nexly-tests/RELEASE_NOTES.md
         fi
