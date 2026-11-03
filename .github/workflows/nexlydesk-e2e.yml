@@ -1,0 +1,157 @@
+name: NexlyDesk e2e direct-IP across two runners (reuse build artifacts)
+# Host and client run on SEPARATE GitHub runners. The host's port 21118 is exposed with a free,
+# account-less bore tunnel (bore.pub). Endpoints/passwords are exchanged via run artifacts.
+on:
+  workflow_dispatch:
+    inputs:
+      build_run:
+        description: run id whose artifacts to test
+        required: true
+permissions:
+  contents: read
+  actions: read
+env:
+  GH_TOKEN: ${{ github.token }}
+jobs:
+  win-host:
+    name: 'e2e: Windows HOST (test pattern) on runner A'
+    runs-on: windows-2022
+    timeout-minutes: 50
+    steps:
+    - uses: actions/checkout@v4
+      with: { sparse-checkout: .github/nexly-tests }
+    - uses: actions/download-artifact@v4
+      with: { name: nexlydesk-windows, path: dist, run-id: '${{ inputs.build_run }}', github-token: '${{ github.token }}' }
+    - name: install, launch, password, test pattern
+      shell: pwsh
+      run: .github/nexly-tests/e2e-host.ps1 -Phase start
+    - name: tunnel 21118
+      shell: pwsh
+      run: |
+        .github/nexly-tests/tunnel.ps1 -Out ep.txt
+        New-Item -ItemType Directory -Force ep | Out-Null
+        "EP=$(Get-Content ep.txt)`nPW=$(Get-Content pw.txt)" | Set-Content ep/endpoint.txt
+        Copy-Item ep/endpoint.txt evidence/endpoint.txt
+    - uses: actions/upload-artifact@v4
+      with: { name: ep-win-host, path: ep }
+    - name: wait for client, screenshots, uninstall
+      shell: pwsh
+      run: |
+        .github/nexly-tests/wait-artifact.ps1 -Name done-win-host -Dest done -Timeout 2400
+        .github/nexly-tests/e2e-host.ps1 -Phase wait
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with: { name: evidence-e2e-win-host, path: evidence }
+
+  win-client:
+    name: 'e2e: Windows CLIENT on runner B -> Windows host'
+    runs-on: windows-2022
+    timeout-minutes: 50
+    steps:
+    - uses: actions/checkout@v4
+      with: { sparse-checkout: .github/nexly-tests }
+    - uses: actions/download-artifact@v4
+      with: { name: nexlydesk-windows, path: dist, run-id: '${{ inputs.build_run }}', github-token: '${{ github.token }}' }
+    - name: connect
+      shell: pwsh
+      run: |
+        .github/nexly-tests/wait-artifact.ps1 -Name ep-win-host -Dest ep -Timeout 2400
+        $kv = @{}; Get-Content ep/endpoint.txt | ForEach-Object { $k,$v = $_ -split '=',2; $kv[$k]=$v }
+        .github/nexly-tests/e2e-client.ps1 -Endpoint $kv.EP -Password $kv.PW -Label win-host -ExpectPattern
+    - name: signal done
+      if: always()
+      shell: pwsh
+      run: New-Item -ItemType Directory -Force done | Out-Null; 'done' | Set-Content done/done.txt
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with: { name: done-win-host, path: done }
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with: { name: evidence-e2e-win-client, path: evidence }
+
+  android-host:
+    name: 'e2e: Android HOST (emulator) on Linux runner C'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@v4
+      with: { sparse-checkout: .github/nexly-tests }
+    - uses: actions/download-artifact@v4
+      with: { name: nexlydesk-android, path: dist, run-id: '${{ inputs.build_run }}', github-token: '${{ github.token }}' }
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+    - name: boot emulator (API 30, pixel_6)
+      run: |
+        SDK=$ANDROID_HOME/cmdline-tools/latest/bin
+        yes | $SDK/sdkmanager --install "system-images;android-30;google_apis;x86_64" emulator platform-tools > /dev/null
+        echo no | $SDK/avdmanager create avd -n nx -k "system-images;android-30;google_apis;x86_64" -d pixel_6
+        nohup $ANDROID_HOME/emulator/emulator -avd nx -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot > emu.log 2>&1 &
+        export PATH=$ANDROID_HOME/platform-tools:$PATH
+        adb wait-for-device
+        for i in $(seq 1 120); do [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && break; sleep 5; done
+        for s in window_animation_scale transition_animation_scale animator_duration_scale; do adb shell settings put global $s 0; done
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+    - name: install, start sharing, verify ID + 21118
+      run: bash .github/nexly-tests/android-start.sh
+    - name: tunnel 21118 (adb forward + bore)
+      run: |
+        adb forward tcp:21118 tcp:21118
+        bash .github/nexly-tests/tunnel.sh ep.txt
+        . evidence/03-parsed.env
+        mkdir -p ep; printf 'EP=%s\nPW=%s\nID=%s\n' "$(cat ep.txt)" "$ANDROID_OTP" "$ANDROID_ID" > ep/endpoint.txt
+        cp ep/endpoint.txt evidence/endpoint.txt; cat ep/endpoint.txt
+    - uses: actions/upload-artifact@v4
+      with: { name: ep-android-host, path: ep }
+    - name: during session (screenshots, accept prompts)
+      run: |
+        EV=evidence
+        ( bash .github/nexly-tests/wait-artifact.sh done-android-host done 2400; touch /tmp/client-done ) &
+        k=0
+        while [ ! -f /tmp/client-done ] && [ $k -lt 160 ]; do
+          k=$((k+1)); adb shell uiautomator dump /sdcard/s.xml >/dev/null 2>&1; adb pull /sdcard/s.xml /tmp/s.xml >/dev/null 2>&1
+          C=$(python3 -c "
+        import re;x=open('/tmp/s.xml',encoding='utf8').read()
+        for m in re.finditer(r'<node [^>]*>',x):
+          n=m.group(0)
+          if re.search(r'(text|content-desc)=\"(Accept|ACCEPT|Start now|START NOW)\"',n):
+            a=list(map(int,re.findall(r'\d+',re.search(r'bounds=\"([^\"]+)\"',n).group(1))));print((a[0]+a[2])//2,(a[1]+a[3])//2);break" 2>/dev/null)
+          [ -n "$C" ] && adb shell input tap $C
+          if [ $((k % 4)) = 1 ]; then adb exec-out screencap -p > $EV/A-session-$k.png; cp /tmp/s.xml $EV/A-session-$k.xml; fi
+          sleep 15
+        done
+        adb exec-out screencap -p > $EV/A-session-final.png
+        adb logcat -d | grep -iE 'connection opened|Connection secured|LoginRequest|new connection|video_conn|authorized' | tail -50 > $EV/A-session-logcat.log; cat $EV/A-session-logcat.log
+    - name: crash check + uninstall
+      if: always()
+      run: bash .github/nexly-tests/android-finish.sh
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with: { name: evidence-e2e-android-host, path: evidence }
+
+  android-client:
+    name: 'e2e: Windows CLIENT on runner D -> Android host'
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@v4
+      with: { sparse-checkout: .github/nexly-tests }
+    - uses: actions/download-artifact@v4
+      with: { name: nexlydesk-windows, path: dist, run-id: '${{ inputs.build_run }}', github-token: '${{ github.token }}' }
+    - name: connect
+      shell: pwsh
+      run: |
+        .github/nexly-tests/wait-artifact.ps1 -Name ep-android-host -Dest ep -Timeout 3000
+        $kv = @{}; Get-Content ep/endpoint.txt | ForEach-Object { $k,$v = $_ -split '=',2; $kv[$k]=$v }
+        .github/nexly-tests/e2e-client.ps1 -Endpoint $kv.EP -Password $kv.PW -Label android-host
+    - name: signal done
+      if: always()
+      shell: pwsh
+      run: New-Item -ItemType Directory -Force done | Out-Null; 'done' | Set-Content done/done.txt
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with: { name: done-android-host, path: done }
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with: { name: evidence-e2e-android-client, path: evidence }
