@@ -84,7 +84,7 @@ lazy_static::lazy_static! {
     pub static ref NEW_STORED_PEER_CONFIG: Mutex<HashSet<String>> = Default::default();
     // NexlyDesk: direct IP / LAN access on by default (port 21118), no rendezvous server needed.
     pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(
-        [("direct-server".to_owned(), "Y".to_owned())].into_iter().collect()
+        vec![("direct-server".to_owned(), "Y".to_owned())].into_iter().collect()
     );
     pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref DEFAULT_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
