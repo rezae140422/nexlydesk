@@ -26,10 +26,12 @@ adb shell pidof $PKG || fail "process not running 30s after launch"
 B=$(tapdesc '[^"]*(Share screen|اشتراک)[^"]*'); [ -n "$B" ] && adb shell input tap $B
 sleep 5
 SAF=0
-for k in $(seq 1 20); do
+for k in $(seq 1 30); do
   dump; cp /tmp/u.xml "$EV/03a-step-$k.xml"
   grep -qE 'com.android.documentsui|USE THIS FOLDER|Use this folder' /tmp/u.xml && SAF=1
   if listening && grep -qE '[0-9]{3} ?[0-9]{3} ?[0-9]{3,4}' /tmp/u.xml && ! grep -qE 'Start service' /tmp/u.xml; then break; fi
+  # scam-warning dialog: "I Agree" is enabled only after a countdown
+  if grep -q 'I Agree' /tmp/u.xml; then sleep 15; D=$(tapdesc "Don't show again"); [ -n "$D" ] && adb shell input tap $D; sleep 1; fi
   C=$(tapdesc 'Start service|I Agree|Start now|START NOW|OK|Allow|ALLOW|Accept|Continue')
   if [ -n "$C" ]; then adb shell input tap $C
   elif ! grep -q "package=\"$PKG\"" /tmp/u.xml; then adb shell input keyevent KEYCODE_BACK
