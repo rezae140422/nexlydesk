@@ -4,7 +4,9 @@ $z = Join-Path $env:TEMP 'bore.zip'
 Invoke-WebRequest https://github.com/ekzhang/bore/releases/download/v0.6.0/bore-v0.6.0-x86_64-pc-windows-msvc.zip -OutFile $z
 Expand-Archive $z -DestinationPath "$env:TEMP\bore" -Force
 $log = "$env:TEMP\bore.log"
-Start-Process -FilePath "$env:TEMP\bore\bore.exe" -ArgumentList 'local','21118','--to','bore.pub' -RedirectStandardOutput $log -RedirectStandardError "$log.err" -WindowStyle Hidden
+# start via WMI so the tunnel is not tied to this step's job object (survives the step)
+$cmd = "cmd.exe /c `"$env:TEMP\bore\bore.exe`" local 21118 --to bore.pub > `"$log`" 2> `"$log.err`""
+Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmd } | Out-Null
 for ($i=0; $i -lt 30; $i++) { Start-Sleep 2; $m = Select-String -Path $log,"$log.err" -Pattern 'bore\.pub:\d+' -ErrorAction SilentlyContinue | Select-Object -First 1; if ($m) { break } }
 Get-Content $log,"$log.err" -ErrorAction SilentlyContinue
 if (-not $m) { throw 'tunnel failed' }

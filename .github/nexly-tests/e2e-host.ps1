@@ -17,10 +17,11 @@ if ($Phase -eq 'start') {
   for ($i=0; $i -lt 150 -and -not $opened; $i++) {
     Start-Sleep 10
     Collect-AppLogs
-    $opened = Get-ChildItem -Recurse (Join-Path $Ev 'app-logs') -File -Filter *.log -ErrorAction SilentlyContinue | Select-String 'Connection opened from' | Select-Object -First 1
+    $opened = Get-ChildItem -Recurse (Join-Path $Ev 'app-logs') -File -Filter *.log -ErrorAction SilentlyContinue | Select-String 'Connection opened from' | Where-Object { $_.Line -notmatch 'from \[::1\]:\d+\.$' -or $true } | Select-Object -Last 1
   }
   if (-not $opened) { Shot 'H9-no-connection'; throw 'host never got a connection' }
   Log host "HOST: $($opened.Line)"
+  Log host ("bore alive: " + [bool](Get-Process bore -ErrorAction SilentlyContinue))
   Start-Sleep 20; Shot 'H2-host-during-session'
   Start-Sleep 100; Shot 'H3-host-during-session-later'
   Collect-AppLogs
