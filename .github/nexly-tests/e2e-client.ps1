@@ -12,7 +12,7 @@ function PatternRatio($file) {
 }
 $ok = $false
 for ($a=1; $a -le 4 -and -not $ok; $a++) {
-  Log client "attempt $a: --connect $Endpoint"
+  Log client "attempt ${a}: --connect $Endpoint"
   $sp = Start-Process -FilePath $Exe -ArgumentList '--connect', $Endpoint, '--password', $Password -PassThru
   for ($i=1; $i -le 9; $i++) {
     Start-Sleep 5
@@ -22,7 +22,7 @@ for ($a=1; $a -le 4 -and -not $ok; $a++) {
   $f = "C$a-$Label-client-session"
   Shot $f
   $r = PatternRatio (Join-Path $Ev "$f.png")
-  Log client "attempt $a host-pattern pixel ratio in client screenshot: $r"
+  Log client "attempt ${a} host-pattern pixel ratio in client screenshot: $r"
   Collect-AppLogs
   $err = Get-ChildItem -Recurse (Join-Path $Ev 'app-logs') -File -Filter *.log -ErrorAction SilentlyContinue | Select-String 'Wrong Password|Connection error|Failed to connect|timeout' | Select-Object -Last 3
   Log client ("recent errors: " + ($err | Out-String))
