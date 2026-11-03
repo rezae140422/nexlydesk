@@ -1,3 +1,4 @@
+import '../../nexly/nexly_theme.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -519,10 +520,10 @@ class ServerInfo extends StatelessWidget {
               )
             ]),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text(
+              Expanded(child: NexlyFullValue(
                 model.serverId.value.text,
                 style: textStyleValue,
-              ),
+              )),
               IconButton(
                   visualDensity: VisualDensity.compact,
                   icon: Icon(Icons.copy_outlined),
@@ -540,10 +541,10 @@ class ServerInfo extends StatelessWidget {
               )
             ]),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text(
+              Expanded(child: NexlyFullValue(
                 !showOneTime ? '-' : model.serverPasswd.value.text,
                 style: textStyleValue,
-              ),
+              )),
               !showOneTime
                   ? SizedBox.shrink()
                   : Row(children: [

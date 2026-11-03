@@ -11,6 +11,9 @@ NexlyDesk نرم‌افزار کنترل و پشتیبانی از راه دور 
 | ویندوز (۶۴ بیتی) | [NexlyDesk-windows-x64.exe](https://github.com/rezae140422/nexlydesk/releases/latest/download/NexlyDesk-windows-x64.exe) |
 | اندروید (همهٔ پردازنده‌ها) | [NexlyDesk-android-universal.apk](https://github.com/rezae140422/nexlydesk/releases/latest/download/NexlyDesk-android-universal.apk) |
 
+
+> **سرور موقت:** تا آماده شدن سرور داخلی Nexly در ایران، این نسخه **به‌طور موقت از سرورهای عمومی RustDesk** برای اتصال استفاده می‌کند. اگر این سرورها در دسترس نباشند (مثلاً به‌دلیل محدودیت اینترنت)، برنامه پیام «سرور NexlyDesk در دسترس نیست» نشان می‌دهد.
+
 > نسخه‌های فعلی آزمایشی (alpha) و **بدون امضای دیجیتال** هستند؛ ممکن است ویندوز هشدار SmartScreen و اندروید هشدار «منبع ناشناس» نشان دهد.
 
 ## ویژگی‌ها
@@ -35,8 +38,10 @@ NexlyDesk is Nexly's remote control and support app: fast, secure, and built to 
 
 Builds are currently unsigned alpha releases.
 
+> **Temporary server:** until the Nexly in-Iran server is ready, this build **temporarily uses RustDesk's public servers** for connections (switch: `NEXLY_USE_PUBLIC_SERVERS` in `libs/hbb_common/src/config.rs`). If they are unreachable, the app shows a clear Persian message.
+
 ## Independence from foreign services
-Update checks, the default RustDesk API/admin server, and public server defaults are disabled (`NEXLY_OFFLINE_MODE` in `libs/hbb_common/src/config.rs`). Point the client at your own self-hosted ID/relay server.
+Update checks, the default RustDesk API/admin server, and (once the Iran server exists) public server defaults are disabled (`NEXLY_OFFLINE_MODE` in `libs/hbb_common/src/config.rs`). Point the client at your own self-hosted ID/relay server.
 
 ## Build
 CI: `.github/workflows/nexlydesk-release.yml` (run manually or push a `v*` tag) builds the Windows exe and Android universal APK and attaches them to a GitHub Release.

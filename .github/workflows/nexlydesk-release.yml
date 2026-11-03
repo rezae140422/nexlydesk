@@ -146,7 +146,7 @@ jobs:
       shell: bash
       run: echo "SODIUM_LIB_DIR=$VCPKG_ROOT/installed/${{ matrix.job.vcpkg-triplet }}/lib" >> "$GITHUB_ENV"
     - name: Build rustdesk
-      run: "# Windows: build RustDesk\n# --hwcodec is shared by all Windows targets; per-target extras (e.g. --vram) come from the matrix\npython3 .\\build.py --portable --flutter --skip-portable-pack --hwcodec ${{ matrix.job.build-args }}\nmv ./flutter/build/windows/${{ matrix.job.flutter-arch }}/runner/Release ./rustdesk\n\n# Download usbmmidd_v2.zip and extract it to ./rustdesk\nInvoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip\nExpand-Archive usbmmidd_v2.zip -DestinationPath .\nRemove-Item -Path usbmmidd_v2\\Win32 -Recurse\nRemove-Item -Path \"usbmmidd_v2\\deviceinstaller64.exe\", \"usbmmidd_v2\\deviceinstaller.exe\", \"usbmmidd_v2\\usbmmidd.bat\"\nmv -Force .\\usbmmidd_v2 ./rustdesk\n\n# Download printer driver files and extract them to ./rustdesk\ntry {\n  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/rustdesk_printer_driver_v4-1.4.zip -OutFile rustdesk_printer_driver_v4-1.4.zip\n\
+      run: "# Windows: build RustDesk\n# --hwcodec is shared by all Windows targets; per-target extras (e.g. --vram) come from the matrix\npython3 .\\build.py --portable --flutter --skip-portable-pack --hwcodec ${{ matrix.job.build-args }}\nmv ./flutter/build/windows/${{ matrix.job.flutter-arch }}/runner/Release ./rustdesk\nmv ./rustdesk/rustdesk.exe ./rustdesk/NexlyDesk.exe\n\n# Download usbmmidd_v2.zip and extract it to ./rustdesk\nInvoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip\nExpand-Archive usbmmidd_v2.zip -DestinationPath .\nRemove-Item -Path usbmmidd_v2\\Win32 -Recurse\nRemove-Item -Path \"usbmmidd_v2\\deviceinstaller64.exe\", \"usbmmidd_v2\\deviceinstaller.exe\", \"usbmmidd_v2\\usbmmidd.bat\"\nmv -Force .\\usbmmidd_v2 ./rustdesk\n\n# Download printer driver files and extract them to ./rustdesk\ntry {\n  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/rustdesk_printer_driver_v4-1.4.zip -OutFile rustdesk_printer_driver_v4-1.4.zip\n\
         \  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/printer_driver_adapter.zip -OutFile printer_driver_adapter.zip\n  Invoke-WebRequest -Uri https://github.com/rustdesk/hbb_common/releases/download/driver/sha256sums -OutFile sha256sums\n\n  # Check and move the files\n  $checksum_driver = (Select-String -Path .\\sha256sums -Pattern '^([a-fA-F0-9]{64}) \\*rustdesk_printer_driver_v4-1.4\\.zip$').Matches.Groups[1].Value\n  $downloadsum_driver = Get-FileHash -Path rustdesk_printer_driver_v4-1.4.zip -Algorithm SHA256\n  $checksum_adapter = (Select-String -Path .\\sha256sums -Pattern '^([a-fA-F0-9]{64}) \\*printer_driver_adapter\\.zip$').Matches.Groups[1].Value\n  $downloadsum_adapter = Get-FileHash -Path printer_driver_adapter.zip -Algorithm SHA256\n  if ($checksum_driver -eq $downloadsum_driver.Hash -and $checksum_adapter -eq $downloadsum_adapter.Hash) {\n      Write-Output \"rustdesk_printer_driver_v4-1.4, checksums match, extract the file.\"\n\
         \      Expand-Archive rustdesk_printer_driver_v4-1.4.zip -DestinationPath .\n      mkdir ./rustdesk/drivers\n      mv -Force .\\rustdesk_printer_driver_v4-1.4 ./rustdesk/drivers/RustDeskPrinterDriver\n      Expand-Archive printer_driver_adapter.zip -DestinationPath .\n      mv -Force .\\printer_driver_adapter.dll ./rustdesk\n  } elseif ($checksum_driver -ne $downloadsum_driver.Hash) {\n      Write-Output \"rustdesk_printer_driver_v4-1.4, checksums do not match, ignore the file.\"\n  } else {\n      Write-Output \"printer_driver_adapter.dll, checksums do not match, ignore the file.\"\n  }\n} catch {\n    Write-Host \"Ingore the printer driver error.\"\n}\n"
     - name: find Runner.res
@@ -200,7 +200,7 @@ jobs:
 
         pip3 install -r requirements.txt
 
-        python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
+        python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/NexlyDesk.exe
 
         popd
 
@@ -391,21 +391,152 @@ jobs:
       with:
         name: nexlydesk-android
         path: out/NexlyDesk-android-universal.apk
+  test-flutter-widgets:
+    name: 'test: full ID/password widget (no truncation)'
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        flutter-version: ${{ env.FLUTTER_VERSION }}
+    - name: flutter test nexly_full_value_test.dart
+      working-directory: flutter
+      run: flutter pub get && flutter test test/nexly_full_value_test.dart 2>&1 | tee ../widget-test.log
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: evidence-widget-test
+        path: widget-test.log
+  test-windows-host:
+    name: 'test: Windows host (install, launch, ID, accept session, uninstall)'
+    needs: [build-windows]
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: .github/nexly-tests
+    - uses: actions/download-artifact@v4
+      with:
+        name: nexlydesk-windows
+        path: dist
+    - name: install + launch + ID/password
+      shell: pwsh
+      run: .github/nexly-tests/host.ps1 start
+    - uses: actions/upload-artifact@v4
+      with:
+        name: host-id
+        path: share/host.txt
+    - name: wait for client session
+      shell: pwsh
+      run: .github/nexly-tests/host.ps1 wait
+    - name: uninstall
+      shell: pwsh
+      run: .github/nexly-tests/host.ps1 uninstall
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: evidence-windows-host
+        path: evidence
+  test-windows-client:
+    name: 'test: Windows client (install, launch, connect via public server, uninstall)'
+    needs: [build-windows]
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: .github/nexly-tests
+    - uses: actions/download-artifact@v4
+      with:
+        name: nexlydesk-windows
+        path: dist
+    - name: install + launch + connect
+      shell: pwsh
+      run: .github/nexly-tests/client.ps1 start
+    - name: signal done
+      if: always()
+      shell: pwsh
+      run: New-Item -ItemType Directory -Force done | Out-Null; 'done' | Out-File done/done.txt
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: client-done
+        path: done/done.txt
+    - name: uninstall
+      shell: pwsh
+      run: .github/nexly-tests/client.ps1 uninstall
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: evidence-windows-client
+        path: evidence
+  test-android:
+    name: 'test: Android emulator (install, launch, ID, no crash, uninstall)'
+    needs: [build-android-universal]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: .github/nexly-tests
+    - uses: actions/download-artifact@v4
+      with:
+        name: nexlydesk-android
+        path: dist
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+    - uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 30
+        arch: x86_64
+        target: google_apis
+        disable-animations: true
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+        script: bash .github/nexly-tests/android.sh
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: evidence-android
+        path: evidence
   release:
     needs:
     - build-windows
     - build-android-universal
+    - test-flutter-widgets
+    - test-windows-host
+    - test-windows-client
+    - test-android
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: .github/nexly-tests
     - uses: actions/download-artifact@v4
       with:
         path: dist
         pattern: nexlydesk-*
         merge-multiple: true
-    - name: Publish GitHub Release (unsigned, prerelease)
+    - name: Publish GitHub Release (unsigned, latest)
       env:
         GH_TOKEN: ${{ github.token }}
       shell: bash
-      run: "set -e\nls -la dist\nTAG=\"${TAG_NAME}\"\nif gh release view \"$TAG\" -R \"$GITHUB_REPOSITORY\" >/dev/null 2>&1; then\n  gh release upload \"$TAG\" dist/* --clobber -R \"$GITHUB_REPOSITORY\"\nelse\n  gh release create \"$TAG\" dist/* -R \"$GITHUB_REPOSITORY\" --target \"$GITHUB_SHA\" --latest --title \"NexlyDesk $TAG\" --notes \"Unsigned alpha build (Windows x64 exe + Android universal APK). Fork of RustDesk, AGPL-3.0.\"\nfi\n"
+      run: |
+        set -e
+        ls -la dist
+        TAG="${TAG_NAME}"
+        if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          gh release upload "$TAG" dist/* --clobber -R "$GITHUB_REPOSITORY"
+          gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --prerelease=false --latest --notes-file .github/nexly-tests/RELEASE_NOTES.md
+        else
+          gh release create "$TAG" dist/* -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest --title "NexlyDesk $TAG" --notes-file .github/nexly-tests/RELEASE_NOTES.md
+        fi

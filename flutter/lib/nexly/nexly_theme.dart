@@ -4,6 +4,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+export 'nexly_full_value.dart';
 
 import '../consts.dart';
 import '../models/platform_model.dart';

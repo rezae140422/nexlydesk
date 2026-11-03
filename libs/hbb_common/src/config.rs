@@ -123,7 +123,14 @@ const CHARS: &[char] = &[
     'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-pub const RENDEZVOUS_SERVERS: &[&str] = &[BRAND_DEFAULT_SERVER];
+/// TEMPORARY: use RustDesk public servers until the Nexly Iran server is ready.
+/// To revert: set NEXLY_USE_PUBLIC_SERVERS = false (and put the Iran host + key above).
+pub const NEXLY_USE_PUBLIC_SERVERS: bool = true;
+pub const RENDEZVOUS_SERVERS: &[&str] = if NEXLY_USE_PUBLIC_SERVERS {
+    &["rs-ny.rustdesk.com"]
+} else {
+    &[BRAND_DEFAULT_SERVER]
+};
 // TODO(NexlyDesk): replace with our hbbs id_ed25519.pub key
 pub const RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";
 

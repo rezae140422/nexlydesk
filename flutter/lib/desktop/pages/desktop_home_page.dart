@@ -259,19 +259,14 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                             ClipboardData(text: model.serverId.text));
                         showToast(translate("Copied"));
                       },
-                      child: TextFormField(
-                        controller: model.serverId,
-                        readOnly: true,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.only(top: 10, bottom: 10),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 2,
-                        ),
-                      ).workaroundFreezeLinuxMint(),
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: model.serverId,
+                        builder: (_, v, __) => NexlyFullValue(v.text,
+                            style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 2)),
+                      ),
                     ),
                   )
                 ],
@@ -358,16 +353,11 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                               showToast(translate("Copied"));
                             }
                           },
-                          child: TextFormField(
-                            controller: model.serverPasswd,
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding:
-                                  EdgeInsets.only(top: 14, bottom: 10),
-                            ),
-                            style: TextStyle(fontSize: 15),
-                          ).workaroundFreezeLinuxMint(),
+                          child: ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: model.serverPasswd,
+                            builder: (_, v, __) => NexlyFullValue(v.text,
+                                style: const TextStyle(fontSize: 15)),
+                          ).marginOnly(top: 14, bottom: 10),
                         ),
                       ),
                       if (showOneTime)
