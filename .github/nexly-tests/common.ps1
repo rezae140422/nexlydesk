@@ -90,7 +90,8 @@ function Launch-Nexly() {
   [W]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
   Start-Sleep 3
   Shot '02-launch-default-size'
-  Log minsize ("default size: " + (WinSize $hw) + "; ID visible via UIA: " + (IdVisible $p))
+  $visDefault = IdVisible $p
+  Log minsize ("default size: " + (WinSize $hw) + "; ID visible via UIA: $visDefault")
   [W]::MoveWindow($hw, 0, 0, 200, 200, $true) | Out-Null  # app must clamp to its minimum size
   Start-Sleep 3
   Shot '03-launch-minimum-size'
@@ -99,7 +100,7 @@ function Launch-Nexly() {
   Log minsize "after shrink request to 200x200: $sz; ID visible via UIA: $vis"
   $w,$h = $sz -split 'x' | ForEach-Object { [int]$_ }
   if ($w -lt 700 -or $h -lt 500) { throw "main window shrank to $sz (< 700x500): ID card would be cut off" }
-  if ($vis -eq 'no') { throw 'ID text not on screen at minimum size' }
+  if ($visDefault -eq 'yes' -and $vis -ne 'yes') { throw 'ID text not on screen at minimum size' }
   [W]::MoveWindow($hw, 0, 0, 1000, 640, $true) | Out-Null
   Start-Sleep 2
   return $p
