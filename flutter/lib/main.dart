@@ -1,3 +1,4 @@
+import 'package:flutter_hbb/nexly/nexly_full_value.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -412,6 +413,8 @@ WindowOptions getHiddenTitleBarWindowOptions(
   }
   return WindowOptions(
     size: size,
+    // NexlyDesk: the ID/password card must always be fully visible.
+    minimumSize: isMainWindow ? kNexlyMainWindowMinSize : null,
     center: center,
     backgroundColor: (isMacOS && isMainWindow) ? null : Colors.transparent,
     skipTaskbar: false,

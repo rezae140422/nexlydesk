@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// Minimum size of the desktop main window (home page incl. ID/password card).
+const Size kNexlyMainWindowMinSize = Size(720, 520);
+
 /// Always shows the full value (ID / password): LTR, single line, auto-shrinks.
 class NexlyFullValue extends StatelessWidget {
   final String text;

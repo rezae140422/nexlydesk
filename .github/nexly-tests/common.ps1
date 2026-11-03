@@ -8,7 +8,9 @@ Add-Type @"
 using System; using System.Runtime.InteropServices;
 public class W { [DllImport("user32.dll")] public static extern bool MoveWindow(IntPtr h,int x,int y,int w,int ht,bool r);
 [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
-[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h,int c); }
+[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h,int c);
+[StructLayout(LayoutKind.Sequential)] public struct R { public int L,T,Rt,B; }
+[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out R r); }
 "@
 function Shot($name) {
   $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
@@ -43,6 +45,23 @@ function Main-Window() {
     if ($p) { return $p }; Start-Sleep 2 }
   return $null
 }
+function WinSize($hwnd) { $r = New-Object W+R; [W]::GetWindowRect($hwnd, [ref]$r) | Out-Null; return "$($r.Rt-$r.L)x$($r.B-$r.T)" }
+function IdVisible($p) {
+  # UI Automation: look for an on-screen element whose name contains the ID digits
+  try {
+    Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
+    $id = (Run-Cli @('--get-id')) -replace '\D',''
+    if (-not $id) { return 'unknown' }
+    $root = [System.Windows.Automation.AutomationElement]::FromHandle($p.MainWindowHandle)
+    $all = $root.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
+    if ($all.Count -eq 0) { return 'unknown' }
+    foreach ($e in $all) {
+      $n = ($e.Current.Name -replace '\D','')
+      if ($n -and $n.Contains($id) -and -not $e.Current.IsOffscreen) { return 'yes' }
+    }
+    return 'no'
+  } catch { return 'unknown' }
+}
 function Launch-Nexly() {
   Start-Process -FilePath $Exe
   Start-Sleep 20
@@ -53,9 +72,16 @@ function Launch-Nexly() {
   [W]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
   Start-Sleep 3
   Shot '02-launch-default-size'
-  [W]::MoveWindow($p.MainWindowHandle, 0, 0, 200, 200, $true) | Out-Null  # app clamps to its minimum size
+  Log minsize ("default size: " + (WinSize $p.MainWindowHandle) + "; ID visible via UIA: " + (IdVisible $p))
+  [W]::MoveWindow($p.MainWindowHandle, 0, 0, 200, 200, $true) | Out-Null  # app must clamp to its minimum size
   Start-Sleep 3
   Shot '03-launch-minimum-size'
+  $sz = WinSize $p.MainWindowHandle
+  $vis = IdVisible $p
+  Log minsize "after shrink request to 200x200: $sz; ID visible via UIA: $vis"
+  $w,$h = $sz -split 'x' | ForEach-Object { [int]$_ }
+  if ($w -lt 700 -or $h -lt 500) { throw "main window shrank to $sz (< 700x500): ID card would be cut off" }
+  if ($vis -eq 'no') { throw 'ID text not on screen at minimum size' }
   [W]::MoveWindow($p.MainWindowHandle, 0, 0, 1000, 640, $true) | Out-Null
   Start-Sleep 2
   return $p
