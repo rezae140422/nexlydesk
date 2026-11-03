@@ -6,6 +6,10 @@ on:
         description: Release tag
         default: v0.1.0-alpha
         type: string
+      skip_release:
+        description: Build + test only (no release/draft)
+        default: false
+        type: boolean
   push:
     tags:
     - v*
@@ -463,6 +467,7 @@ jobs:
         name: evidence-android
         path: evidence
   release:
+    if: ${{ !inputs.skip_release }}
     needs:
     - build-windows
     - build-android-universal
