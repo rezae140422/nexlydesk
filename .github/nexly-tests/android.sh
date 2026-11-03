@@ -34,11 +34,11 @@ P
 )
 [ -n "$B" ] && adb shell input tap $B
 sleep 5
-for k in $(seq 1 12); do
-  C=$(tapdesc 'Start service|I Agree|Start now|START NOW|OK|Allow|ALLOW|Accept')
+for k in $(seq 1 16); do
+  C=$(tapdesc 'Start service|I Agree|Start now|START NOW|OK|Allow|ALLOW|Accept|Choose folder|USE THIS FOLDER|Use this folder')
   if [ -n "$C" ]; then adb shell input tap $C; else W=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); X=${W%x*}; Y=${W#*x}; adb shell input swipe $((X/2)) $((Y*3/4)) $((X/2)) $((Y/4)) 300; fi
   sleep 5
-  [ $k -eq 3 ] && adb exec-out screencap -p > "$EV/03a-dialog.png"
+  adb exec-out screencap -p > "$EV/03a-step-$k.png"
 
 done
 sleep 10
