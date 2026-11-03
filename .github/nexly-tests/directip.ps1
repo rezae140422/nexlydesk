@@ -4,9 +4,10 @@ $p = Launch-Nexly
 $id = Get-Id
 Shot '04-id-password-default-size'
 $def = Run-Cli @('--option', 'direct-server')
-Log directip "default direct-server option = '$def'"
-if ($env:REQUIRE_DEFAULT_DIRECT -eq '1' -and $def -ne 'Y') { throw "direct IP access is not enabled by default (got '$def')" }
-if ($def -ne 'Y') { Log directip (Run-Cli @('--option', 'direct-server', 'Y')); Start-Sleep 10 }
+$pre = (Get-NetTCPConnection -LocalPort 21118 -State Listen -ErrorAction SilentlyContinue | Out-String).Trim()
+Log directip "stored direct-server option = '$def'; 21118 listening by default (no option set): $([bool]$pre)"
+if ($env:REQUIRE_DEFAULT_DIRECT -eq '1' -and -not $pre) { throw 'direct IP access (21118) is not enabled by default' }
+if (-not $pre) { Log directip (Run-Cli @('--option', 'direct-server', 'Y')); Start-Sleep 10 }
 $pw = 'NxT' + (Get-Random -Minimum 100000 -Maximum 999999) + 'q'
 Log directip ("set password: " + (Run-Cli @('--password', $pw)))
 Start-Sleep 5
