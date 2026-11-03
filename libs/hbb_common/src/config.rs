@@ -82,7 +82,10 @@ lazy_static::lazy_static! {
     static ref KEY_PAIR: Mutex<Option<KeyPair>> = Default::default();
     static ref USER_DEFAULT_CONFIG: RwLock<(UserDefaultConfig, Instant)> = RwLock::new((UserDefaultConfig::load(), Instant::now()));
     pub static ref NEW_STORED_PEER_CONFIG: Mutex<HashSet<String>> = Default::default();
-    pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
+    // NexlyDesk: direct IP / LAN access on by default (port 21118), no rendezvous server needed.
+    pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(
+        [("direct-server".to_owned(), "Y".to_owned())].into_iter().collect()
+    );
     pub static ref OVERWRITE_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref DEFAULT_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
     pub static ref OVERWRITE_DISPLAY_SETTINGS: RwLock<HashMap<String, String>> = Default::default();
@@ -125,7 +128,7 @@ const CHARS: &[char] = &[
 
 /// TEMPORARY: use RustDesk public servers until the Nexly Iran server is ready.
 /// To revert: set NEXLY_USE_PUBLIC_SERVERS = false (and put the Iran host + key above).
-pub const NEXLY_USE_PUBLIC_SERVERS: bool = true;
+pub const NEXLY_USE_PUBLIC_SERVERS: bool = false;
 pub const RENDEZVOUS_SERVERS: &[&str] = if NEXLY_USE_PUBLIC_SERVERS {
     &["rs-ny.rustdesk.com"]
 } else {

@@ -8,7 +8,7 @@ import re,sys
 x=open('/tmp/u.xml',encoding='utf8').read()
 for m in re.finditer(r'<node [^>]*>',x):
     n=m.group(0)
-    if re.search(r'(text|content-desc)="[^"]*('+sys.argv[1]+')',n):
+    if re.search(r'(text|content-desc)="('+sys.argv[1]+')"',n):
         a=list(map(int,re.findall(r'\d+',re.search(r'bounds="([^"]+)"',n).group(1))))
         print((a[0]+a[2])//2,(a[1]+a[3])//2);break
 P
@@ -34,8 +34,8 @@ P
 )
 [ -n "$B" ] && adb shell input tap $B
 sleep 5
-for k in 1 2 3 4 5 6; do
-  C=$(tapdesc 'Start service|I Agree|Start now|START NOW|OK|Allow|ALLOW'); [ -n "$C" ] && adb shell input tap $C; sleep 6
+for k in $(seq 1 12); do
+  C=$(tapdesc 'Start service|I Agree|Start now|START NOW|OK|Allow|ALLOW|Accept'); [ -n "$C" ] && adb shell input tap $C; sleep 6
 done
 sleep 10
 adb exec-out screencap -p > "$EV/03-id-password.png"

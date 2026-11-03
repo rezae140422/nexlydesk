@@ -1,3 +1,4 @@
+import 'package:flutter_hbb/nexly/nexly_full_value.dart';
 import 'dart:async';
 
 import 'package:auto_size_text_field/auto_size_text_field.dart';
@@ -89,6 +90,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
             Obx(() => _buildUpdateUI(stateGlobal.updateUrl.value)),
           _buildNexlyHeader(),
           _buildRemoteIDTextField(),
+          const NexlyDirectIpHint().paddingSymmetric(horizontal: 16, vertical: 4),
         ])),
         SliverFillRemaining(
           hasScrollBody: true,

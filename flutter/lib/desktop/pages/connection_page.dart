@@ -1,3 +1,4 @@
+import 'package:flutter_hbb/nexly/nexly_full_value.dart';
 // main window right pane
 
 import 'dart:async';
@@ -315,6 +316,7 @@ class _ConnectionPageState extends State<ConnectionPage>
                 Flexible(child: _buildRemoteIDTextField(context)),
               ],
             ).marginOnly(top: 22),
+            const NexlyDirectIpHint().paddingOnly(top: 8, right: 12),
             SizedBox(height: 12),
             Divider().paddingOnly(right: 12),
             Expanded(child: PeerTabPage()),

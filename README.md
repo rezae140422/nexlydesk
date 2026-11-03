@@ -12,7 +12,12 @@ NexlyDesk نرم‌افزار کنترل و پشتیبانی از راه دور 
 | اندروید (همهٔ پردازنده‌ها) | [NexlyDesk-android-universal.apk](https://github.com/rezae140422/nexlydesk/releases/latest/download/NexlyDesk-android-universal.apk) |
 
 
-> **سرور موقت:** تا آماده شدن سرور داخلی Nexly در ایران، این نسخه **به‌طور موقت از سرورهای عمومی RustDesk** برای اتصال استفاده می‌کند. اگر این سرورها در دسترس نباشند (مثلاً به‌دلیل محدودیت اینترنت)، برنامه پیام «سرور NexlyDesk در دسترس نیست» نشان می‌دهد.
+> **اتصال مستقیم با IP (بدون سرور):** تا آماده شدن سرور داخلی Nexly، اتصال از طریق نشانی IP انجام می‌شود. «دسترسی مستقیم با IP» (پورت 21118) به‌طور پیش‌فرض روشن است.
+> 1. NexlyDesk را روی هر دو دستگاه نصب و اجرا کنید.
+> 2. در دستگاه مقصد، نشانی IP آن را پیدا کنید (ویندوز: `ipconfig`؛ اندروید: تنظیمات Wi‑Fi) و رمز نمایش‌داده‌شده را یادداشت کنید.
+> 3. در دستگاه کنترل‌کننده، نشانی IP (مثلاً `192.168.1.20`) را در کادر «Enter remote ID» بنویسید، «Connect» را بزنید و رمز را وارد کنید.
+> 4. دو دستگاه باید در یک شبکه (LAN/VPN) باشند، یا پورت TCP 21118 دستگاه مقصد از بیرون در دسترس باشد.
+> اتصال با «شناسه (ID)» فقط پس از راه‌اندازی سرور Nexly (پوشهٔ `server/`) ممکن می‌شود.
 
 > نسخه‌های فعلی آزمایشی (alpha) و **بدون امضای دیجیتال** هستند؛ ممکن است ویندوز هشدار SmartScreen و اندروید هشدار «منبع ناشناس» نشان دهد.
 
@@ -38,10 +43,10 @@ NexlyDesk is Nexly's remote control and support app: fast, secure, and built to 
 
 Builds are currently unsigned alpha releases.
 
-> **Temporary server:** until the Nexly in-Iran server is ready, this build **temporarily uses RustDesk's public servers** for connections (switch: `NEXLY_USE_PUBLIC_SERVERS` in `libs/hbb_common/src/config.rs`). If they are unreachable, the app shows a clear Persian message.
+> **Direct IP connection (no server):** until the Nexly server is ready, connect by IP address. "Enable direct IP access" (TCP 21118) is on by default. Type the target's IP (e.g. `192.168.1.20`) into the remote ID box, click Connect and enter the password shown on the target. Both devices must be on the same LAN/VPN, or port 21118 must be reachable. Connecting by ID needs the Nexly server (see `server/`).
 
 ## Independence from foreign services
-Update checks, the default RustDesk API/admin server, and (once the Iran server exists) public server defaults are disabled (`NEXLY_OFFLINE_MODE` in `libs/hbb_common/src/config.rs`). Point the client at your own self-hosted ID/relay server.
+Update checks, the default RustDesk API/admin server, and public server defaults are disabled (`NEXLY_OFFLINE_MODE` in `libs/hbb_common/src/config.rs`). Point the client at your own self-hosted ID/relay server.
 
 ## Build
 CI: `.github/workflows/nexlydesk-release.yml` (run manually or push a `v*` tag) builds the Windows exe and Android universal APK and attaches them to a GitHub Release.

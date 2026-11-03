@@ -1,0 +1,31 @@
+name: NexlyDesk Server Build (hbbs/hbbr, not deployed)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: server
+    - uses: dtolnay/rust-toolchain@stable
+    - name: build
+      run: bash server/build.sh
+    - name: smoke test install.sh (systemd, --port443) on the runner
+      run: |
+        sudo bash server/install.sh --port443 --relay 127.0.0.1 | tee install-output.txt
+        sleep 5
+        systemctl is-active nexlydesk-hbbs nexlydesk-hbbr
+        sudo ss -lntup | grep -E ':(443|21117) ' | tee ports.txt
+        grep -q ':443 ' ports.txt && grep -q ':21117 ' ports.txt
+    - uses: actions/upload-artifact@v4
+      with:
+        name: nexlydesk-server-linux-x64
+        path: |
+          server/bin/hbbs
+          server/bin/hbbr
+          server/install.sh
+          server/README.md
+          install-output.txt

@@ -9,12 +9,12 @@ permissions:
   contents: read
   actions: read
 jobs:
-  test-windows-host:
-    name: 'test: Windows host (install, launch, ID, accept session, uninstall)'
+  test-windows-direct-ip:
+    name: 'test: Windows install, launch, full ID, direct-IP session, uninstall'
     runs-on: windows-2022
-    timeout-minutes: 30
+    timeout-minutes: 25
     env:
-      GH_TOKEN: ${{ github.token }}
+      REQUIRE_DEFAULT_DIRECT: '0'
     steps:
     - uses: actions/checkout@v4
       with:
@@ -25,59 +25,13 @@ jobs:
         path: dist
         run-id: ${{ inputs.build_run }}
         github-token: ${{ github.token }}
-    - name: install + launch + ID/password
+    - name: run test
       shell: pwsh
-      run: .github/nexly-tests/host.ps1 start
-    - uses: actions/upload-artifact@v4
-      with:
-        name: host-id
-        path: share/host.txt
-    - name: wait for client session
-      shell: pwsh
-      run: .github/nexly-tests/host.ps1 wait
-    - name: uninstall
-      shell: pwsh
-      run: .github/nexly-tests/host.ps1 uninstall
+      run: .github/nexly-tests/directip.ps1
     - uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: evidence-windows-host
-        path: evidence
-  test-windows-client:
-    name: 'test: Windows client (install, launch, connect via public server, uninstall)'
-    runs-on: windows-2022
-    timeout-minutes: 30
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        sparse-checkout: .github/nexly-tests
-    - uses: actions/download-artifact@v4
-      with:
-        name: nexlydesk-windows
-        path: dist
-        run-id: ${{ inputs.build_run }}
-        github-token: ${{ github.token }}
-    - name: install + launch + connect
-      shell: pwsh
-      run: .github/nexly-tests/client.ps1 start
-    - name: signal done
-      if: always()
-      shell: pwsh
-      run: New-Item -ItemType Directory -Force done | Out-Null; 'done' | Out-File done/done.txt
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: client-done
-        path: done/done.txt
-    - name: uninstall
-      shell: pwsh
-      run: .github/nexly-tests/client.ps1 uninstall
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: evidence-windows-client
+        name: evidence-windows-direct-ip
         path: evidence
   test-android:
     name: 'test: Android emulator (install, launch, ID, no crash, uninstall)'
