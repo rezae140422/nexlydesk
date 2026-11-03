@@ -408,4 +408,4 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       shell: bash
-      run: "set -e\nls -la dist\nTAG=\"${TAG_NAME}\"\nif gh release view \"$TAG\" -R \"$GITHUB_REPOSITORY\" >/dev/null 2>&1; then\n  gh release upload \"$TAG\" dist/* --clobber -R \"$GITHUB_REPOSITORY\"\nelse\n  gh release create \"$TAG\" dist/* -R \"$GITHUB_REPOSITORY\" --target \"$GITHUB_SHA\" --prerelease --title \"NexlyDesk $TAG\" --notes \"Unsigned alpha build (Windows x64 exe + Android universal APK). Fork of RustDesk, AGPL-3.0.\"\nfi\n"
+      run: "set -e\nls -la dist\nTAG=\"${TAG_NAME}\"\nif gh release view \"$TAG\" -R \"$GITHUB_REPOSITORY\" >/dev/null 2>&1; then\n  gh release upload \"$TAG\" dist/* --clobber -R \"$GITHUB_REPOSITORY\"\nelse\n  gh release create \"$TAG\" dist/* -R \"$GITHUB_REPOSITORY\" --target \"$GITHUB_SHA\" --latest --title \"NexlyDesk $TAG\" --notes \"Unsigned alpha build (Windows x64 exe + Android universal APK). Fork of RustDesk, AGPL-3.0.\"\nfi\n"
