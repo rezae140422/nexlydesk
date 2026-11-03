@@ -1044,7 +1044,8 @@ pub fn is_modifier(evt: &KeyEvent) -> bool {
 }
 
 pub fn check_software_update() {
-    if is_custom_client() {
+    // NexlyDesk: no call-home update check to api.rustdesk.com (sanction/filter-proof).
+    if hbb_common::config::NEXLY_OFFLINE_MODE || is_custom_client() {
         return;
     }
     let opt = LocalConfig::get_option(keys::OPTION_ENABLE_CHECK_UPDATE);
@@ -1163,6 +1164,9 @@ fn process_software_update_check_response(bytes: Bytes) -> ResultType<()> {
 // Because the url is always `https://api.rustdesk.com/version/latest`.
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+    if hbb_common::config::NEXLY_OFFLINE_MODE {
+        return Ok(());
+    }
     let (request, url) =
         hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_CLIENT.to_string());
     let proxy_conf = Config::get_socks();
@@ -1293,6 +1297,10 @@ fn get_api_server_(api: String, custom: String) -> String {
         } else {
             return format!("http://{}", s);
         }
+    }
+    // NexlyDesk: never fall back to a foreign API server.
+    if hbb_common::config::NEXLY_OFFLINE_MODE {
+        return "".to_owned();
     }
     "https://admin.rustdesk.com".to_owned()
 }
